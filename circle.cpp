@@ -1,24 +1,20 @@
 #include <windows.h>
+
 #ifdef __APPLE__
+#include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
 #endif
 #include <iostream>
 #include <stdlib.h>
 #include <bits/stdc++.h>
+#include<cmath>
 using namespace std;
+
 # define SCREEN_HEIGHT 480
 
-vector< pair<int,int> > PointsArr;
-
-
-void init()
-{
-    glClearColor(0,0,0,0);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0,1000,0,480);
-}
+vector< pair<float,float> >points;
+int Cnt = 0;
 
 static void display(void)
 {
@@ -26,86 +22,84 @@ static void display(void)
     glFlush();
 }
 
-void drawCircle()
-{
-    int x0 = PointsArr[0].first;
-    int y0 = PointsArr[0].second;
-    int x1 = PointsArr[1].first;
-    int y1 = PointsArr[1].second;
+void init(){
+    glClearColor(0,0,0,0);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0,640,0,480);
+}
 
-    int r = sqrt(pow((x0-x1),2) + pow((y0-y1),2));
+void drawCircle(float r){
 
-
-    int x = 0, y = r, x_centre = x0, y_centre = y0;
-    int P = 1 - r;
+    float x = 0, y = r;
+    float x_centre = points[0].first;
+    float y_centre = points[0].second;
 
     glBegin(GL_POINTS);
-    while (x < y)
+
+    glVertex2f(x + x_centre,y + y_centre);
+    glVertex2f(x + x_centre,-y + y_centre);
+    glVertex2f(y + x_centre,x + y_centre);
+    glVertex2f(-y + x_centre,x + y_centre);
+
+    float P = 1 - r;
+
+    while (y > x)
     {
-        if (P < 0)
-        {
+        x++;
+        if (P <= 0)
             P = P + 2*x + 1;
-            x += 1;
-        }
         else
         {
-            P = P + 2*x - 2*y + 1;
-            x += 1;
-            y -= 1;
+            y--;
+            P = P - 2*y + 2*x + 1;
         }
-        glColor3f(0, 0, 1);
-        glVertex2f(x + x_centre ,y + y_centre);
 
-        glColor3f(0, 1, 0);
-        glVertex2f(x + x_centre ,-y + y_centre);
+        if (x > y)
+            break;
 
-        glColor3f(1, 0, 0);
-        glVertex2f(-x + x_centre ,y + y_centre);
+        glVertex2f(x + x_centre,y + y_centre);
+        glVertex2f(-x + x_centre,y + y_centre);
+        glVertex2f(x + x_centre,-y + y_centre);
+        glVertex2f(-x + x_centre,-y + y_centre);
 
-        glColor3f(1, 1, 0);
-        glVertex2f(-x + x_centre ,-y + y_centre);
-
-        glColor3f(1, 0, 1);
-        glVertex2f(y + x_centre ,x + y_centre);
-
-        glColor3f(0, 1, 1);
-        glVertex2f(-y + x_centre ,x + y_centre);
-
-        glColor3f(0.2, 0.9, 0.9);
-        glVertex2f(y + x_centre ,-x + y_centre);
-
-        glColor3f(1, 1, 1);
-        glVertex2f(-y + x_centre ,-x + y_centre);
-
+        if (x != y)
+        {
+            glVertex2f(y + x_centre,x + y_centre);
+            glVertex2f(-y + x_centre,x + y_centre);
+            glVertex2f(y + x_centre,-x + y_centre);
+            glVertex2f(-y + x_centre,-x + y_centre);
+        }
     }
 
     glEnd();
-    glFlush();
 }
 
 void mouse_handling(int button,int status,int x,int y){
+    cout<<endl<<Cnt;
     if (button == GLUT_LEFT_BUTTON && status == GLUT_DOWN)
     {
-        pair<int,int> p;
-        p.first = x;
-        p.second =  SCREEN_HEIGHT - y;
-        PointsArr.push_back(p);
-        glBegin(GL_POINTS);
-        glVertex2f(x, SCREEN_HEIGHT - y);
-        glEnd();
-        glFlush();
+            glBegin(GL_POINTS);
+            glVertex2f(x, SCREEN_HEIGHT - y);
+            pair<float,float> p(x, SCREEN_HEIGHT - y);
+            points.push_back(p);
+            glEnd();
+            glFlush();
+            Cnt+=1;
     }
 
-    if(button == GLUT_RIGHT_BUTTON && status == GLUT_DOWN && PointsArr.size()==2 ){
-        drawCircle();
-        PointsArr.clear();
+    if(button == GLUT_RIGHT_BUTTON && Cnt>=2 && status == GLUT_DOWN){
+        float radius = pow(pow(points[0].first - points[1].first,2) + pow(points[0].second - points[1].second,2),0.5);
+        drawCircle(radius);
     }
 }
+
+
 
 int main(int argc, char *argv[])
 {
     glutInit(&argc, argv);
-    glutInitWindowSize(1000,480);
+    glutInitWindowSize(640,480);
     glutInitWindowPosition(10,10);
     glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
 
@@ -115,4 +109,6 @@ int main(int argc, char *argv[])
     glutDisplayFunc(display);
     glutMouseFunc(mouse_handling);
     glutMainLoop();
+
+    return EXIT_SUCCESS;
 }
